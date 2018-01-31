@@ -1,10 +1,7 @@
 #include "Texture.h"
+#include "Color.h"
 #include <stdio.h>
 #include <stdlib.h>
-
-// REMOVE ME!!!!!
-#define RGBA8(r, g, b, a) ((r) | (g << 8) | (b << 16) | (a << 24))
-#define RGB8(r, g, b) RGBA8(r, g, b, 255)
 
 static int ReadInt(FILE* file, char* buffer)
 {

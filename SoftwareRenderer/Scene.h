@@ -95,10 +95,7 @@ struct Scene
 		Texture_LoadPPM("Textures\\Sky.ppm"),
 		Texture_LoadPPM("Textures\\Grid.ppm")
 	};
-} scene;
-
-const int floorColor = RGB8(45, 156, 45);
-const int ceilingColor = RGB8(74, 187, 255);
+} defaultScene;
 
 float TexturePointOnWall(Vector2 p1, Vector2 p2, Vector2 intersection)
 {

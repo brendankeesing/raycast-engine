@@ -86,6 +86,14 @@ struct Vector2
 	{
 		return atan2f(Det(a, b), Dot(a, b));
 	}
+
+	inline static Vector2 Lerp(Vector2 a, Vector2 b, float t)
+	{
+		return Vector2(
+			t * (b.x - a.x) + a.x,
+			t * (b.y - a.y) + a.y
+		);
+	}
 };
 
 struct Vector2i
@@ -102,15 +110,15 @@ struct Vector2i
 
 	inline float GetMagnitude()
 	{
-		return sqrtf(GetMagnitudeSqr());
+		return sqrtf((float)GetMagnitudeSqr());
 	}
 
-	inline static int Dot(Vector2 a, Vector2 b)
+	inline static int Dot(Vector2i a, Vector2i b)
 	{
 		return a.x * b.x + a.y * b.y;
 	}
 
-	inline static int Det(Vector2 a, Vector2 b)
+	inline static int Det(Vector2i a, Vector2i b)
 	{
 		return a.x * b.y - a.y * b.x;
 	}
@@ -171,32 +179,6 @@ bool GetRayToLineSegmentIntersection(Vector2 rayorigin, Vector2 raydirection, Ve
 	*distance = t1;
 	return t2 >= 0 && t2 <= 1;
 }
-/*
-int GetRayToLineSegmentIntersection2(Vector2 origin, Vector2 dir, Vector2 vert1, Vector2 vert2, Vector2 *normal, Vector2 *normalrot, float *dist, Vector2 *poi)
-{
-	float d, dp1, dp2;
-
-	d = Vector2::Dot(dir, normal);
-	if (d == 0.0f)
-		return 0;
-
-	*dist = Vector2::Dot(vert1, normal) - Vector2::Dot(origin, normal);
-
-	if ((*dist <= 0.0f && d > 0.0f) ||
-		(*dist > 0.0f && d <= 0.0f))
-		return 0;
-
-	*dist /= d;
-	*poi = Vector2(origin.x + dir.x * *dist, origin.y + dir.y * *dist);
-
-	d = Vector2::Dot(*poi, normalrot);
-	dp1 = Vector2::Dot(vert1, normalrot);
-	dp2 = Vector2::Dot(vert2, normalrot);
-
-	if ((d >= dp1 && d <= dp2) || (d <= dp1 && d >= dp2))
-		return 1;
-	return 0;
-}*/
 
 float Lerp(float a, float b, float t)
 {
