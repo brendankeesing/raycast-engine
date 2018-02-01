@@ -6,25 +6,6 @@
 
 namespace Draw3D
 {
-	int ApplyDistanceShadow(int color, float dist)
-	{
-		float mindist = 8;
-		if (dist < mindist)
-			return color;
-
-		return RGB8(0, 0, 0);// test
-
-		float maxdist = 15;
-		if (dist > maxdist)
-			return RGB8(0, 0, 0);
-
-		dist = Clamp(InverseLerp(maxdist, mindist, dist), 0.0f, 1.0f);
-		int r = (int)(GetR(color) * dist);
-		int g = (int)(GetG(color) * dist);
-		int b = (int)(GetB(color) * dist);
-		return RGB8(r, g, b);
-	}
-
 	struct ColumnData
 	{
 		int x;
@@ -45,15 +26,14 @@ namespace Draw3D
 		float distortionfix = cosf(columndata->localAngle) * pixeltogradcoefficent; // remove distortion
 		for (int y = ystart; y < yend; y++)
 		{
-			float invdist;
+			float dist;
 			if (isfloor)
-				invdist = (y - drawdata->height / 2) * distortionfix;
+				dist = 1.0f / ((y - drawdata->height / 2) * distortionfix);
 			else
-				invdist = (drawdata->height / 2 - y) * distortionfix;
-			//float dist = 1.0f / invdist;
+				dist = 1.0f / ((drawdata->height / 2 - y) * distortionfix);
 
-			float worldx = textureoffset.x + texturescale.x * (drawdata->camera->position.x + dirx / invdist);
-			float worldy = textureoffset.y + texturescale.y * (drawdata->camera->position.y + diry / invdist);
+			float worldx = textureoffset.x + texturescale.x * (drawdata->camera->position.x + dirx * dist);
+			float worldy = textureoffset.y + texturescale.y * (drawdata->camera->position.y + diry * dist);
 
 			int texx = FloorToInt(worldx * tex->width) % tex->width;
 			if (texx < 0)
@@ -62,14 +42,11 @@ namespace Draw3D
 			if (texy < 0)
 				texy += tex->height;
 
-			int color = tex->data[texy * tex->width + texx];
-			//dist = Vector2(player.position.x - world.x, player.position.y - world.y).GetMagnitude();
-			//color = ApplyDistanceShadow(color, dist);
-			drawdata->colorBuffer[y * drawdata->width + columndata->x] = color;
+			drawdata->colorBuffer[y * drawdata->width + columndata->x] = tex->data[texy * tex->width + texx];
 		}
 	}
 
-	void DrawWall(DrawData* drawdata, int x, int ystart, int yend, int yoffscreenstart, int yoffscreenend, float wallheight, float dist, Texture* tex, Vector2 textureoffset, Vector2 texturescale, float texturepoint)
+	void DrawWall(DrawData* drawdata, int x, int ystart, int yend, int yoffscreenstart, int yoffscreenend, float wallheight, float dist, Texture* tex, Vector2 textureoffset, Vector2 texturescale, float texturepoint, bool checkalpha = false)
 	{
 		// get texture info
 		int texx = FloorToInt(tex->width * (textureoffset.x + texturepoint * texturescale.x)) % tex->width;
@@ -84,8 +61,8 @@ namespace Draw3D
 				texy += tex->height;
 
 			int color = tex->data[texx + texy * tex->width];
-			//color = ApplyDistanceShadow(color, dist);
-			drawdata->colorBuffer[y * drawdata->width + x] = color;
+			if (!checkalpha || GetA(color) > 128)
+				drawdata->colorBuffer[y * drawdata->width + x] = color;
 		}
 	}
 
@@ -168,8 +145,12 @@ namespace Draw3D
 			DrawWall(drawdata, columndata->x, ywallstart, ywallend, yoffscreenstart, yoffscreenend, wallheight, dist, drawdata->scene->textures[wall->surface.textureID], wall->surface.textureOffset, wall->surface.textureScale, texturepoint);
 
 		// OPTIMISE: This could be better because it's draw the entire wall before drawing the sector when only part of the wall needs to be drawn
-		if (wall->nextSector != -1)
+		if (wall->flags & WallFlags::ConnectSector)
+		{
 			DrawSector(drawdata, columndata, ywallstart, ywallend, &drawdata->scene->sectors[wall->nextSector], dist);
+			if (wall->flags & WallFlags::DrawSectorWall)
+				DrawWall(drawdata, columndata->x, ywallstart, ywallend, yoffscreenstart, yoffscreenend, wallheight, dist, drawdata->scene->textures[wall->surface.textureID], wall->surface.textureOffset, wall->surface.textureScale, texturepoint, true);
+		}
 	}
 
 	void Draw(DrawData* drawdata)

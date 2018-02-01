@@ -4,7 +4,7 @@
 class Texture
 {
 public:
-	Texture(int w, int h) : width(w), height(h), pixelCount(w * h), data(new int[pixelCount]) {}
+	Texture(int w, int h, bool hasalpha) : width(w), height(h), hasAlpha(hasalpha), pixelCount(w * h), data(new int[pixelCount]) {}
 	~Texture()
 	{
 		delete[] data;
@@ -13,6 +13,7 @@ public:
 	const int width;
 	const int height;
 	const int pixelCount;
+	const bool hasAlpha;
 	int* const data;
 };
 

@@ -23,11 +23,20 @@ struct Sector
 	Surface ceilingSurface;
 };
 
+enum WallFlags
+{
+	None = 0x00,
+	ConnectSector = 0x01,
+	Collidable = 0x02,
+	DrawSectorWall = 0x04,
+};
+
 struct Wall
 {
 	int vertex;
 	int nextSector;
 	Surface surface;
+	WallFlags flags : 8;
 };
 
 struct Scene
@@ -43,27 +52,27 @@ struct Scene
 	int wallCount = 19;
 	Wall walls[19] =
 	{
-		{ 0, -1, { 2, { 0, 0 }, { 1, 1 }, false } },
-		{ 1, 1, { 2, { 0, 0 }, { 1, 1 }, false } },
-		{ 2, -1, { 2, { 0, 0 }, { 1, 1 }, false } },
-		{ 3, -1, { 2, { 0, 0 }, { 1, 1 }, false } },
-		{ 4, 2, { 2, { 0, 0 }, { 1, 1 }, false } },
-		{ 5, -1, { 2, { 0, 0 }, { 1, 1 }, false } },
-		{ 6, -1, { 2, { 0, 0 }, { 1, 1 }, false } },
+		{ 0, -1, { 2, { 0, 0 }, { 1, 1 }, false }, WallFlags::None },
+		{ 1, 1, { 7, { 0, 0 }, { 1, 1 }, false }, WallFlags::ConnectSector | WallFlags::DrawSectorWall },
+		{ 2, -1, { 2, { 0, 0 }, { 1, 1 }, false }, WallFlags::None },
+		{ 3, -1, { 2, { 0, 0 }, { 1, 1 }, false }, WallFlags::None },
+		{ 4, 2, { 2, { 0, 0 }, { 1, 1 }, false }, WallFlags::ConnectSector },
+		{ 5, -1, { 2, { 0, 0 }, { 1, 1 }, false }, WallFlags::None },
+		{ 6, -1, { 2, { 0, 0 }, { 1, 1 }, false }, WallFlags::None },
 
-		{ 1, -1, { 1, { 0, 0 }, { 1, 1 }, false } },
-		{ 7, -1, { 1, { 0, 0 }, { 1, 1 }, false } },
-		{ 8, -1, { 1, { 0, 0 }, { 1, 1 }, false } },
-		{ 9, 2, { 1, { 0, 0 }, { 1, 1 }, false } },
-		{ 10, -1, { 1, { 0, 0 }, { 1, 1 }, false } },
-		{ 2, 0, { 1, { 0, 0 }, { 1, 1 }, false } },
+		{ 1, -1, { 1, { 0, 0 }, { 1, 1 }, false }, WallFlags::None },
+		{ 7, -1, { 1, { 0, 0 }, { 1, 1 }, false }, WallFlags::None },
+		{ 8, -1, { 1, { 0, 0 }, { 1, 1 }, false }, WallFlags::None },
+		{ 9, 2, { 1, { 0, 0 }, { 1, 1 }, false }, WallFlags::ConnectSector },
+		{ 10, -1, { 1, { 0, 0 }, { 1, 1 }, false }, WallFlags::None },
+		{ 2, 0, { 7, { 0, 0 }, { 1, 1 }, false }, WallFlags::ConnectSector | WallFlags::DrawSectorWall },
 
-		{ 5, 0, { 0, { 0, 0 }, { 1, 1 }, false } },
-		{ 4, -1, { 0, { 0, 0 }, { 1, 1 }, false } },
-		{ 11, -1, { 0, { 0, 0 }, { 1, 1 }, false } },
-		{ 10, 1, { 0, { 0, 0 }, { 1, 1 }, false } },
-		{ 9, -1, { 0, { 0, 0 }, { 1, 1 }, false } },
-		{ 12, -1, { 5, { 0, 0 }, { 1, 1 }, true } }
+		{ 5, 0, { 0, { 0, 0 }, { 1, 1 }, false }, WallFlags::ConnectSector },
+		{ 4, -1, { 0, { 0, 0 }, { 1, 1 }, false }, WallFlags::None },
+		{ 11, -1, { 0, { 0, 0 }, { 1, 1 }, false }, WallFlags::None },
+		{ 10, 1, { 0, { 0, 0 }, { 1, 1 }, false }, WallFlags::ConnectSector },
+		{ 9, -1, { 0, { 0, 0 }, { 1, 1 }, false }, WallFlags::None },
+		{ 12, -1, { 5, { 0, 0 }, { 1, 1 }, true }, WallFlags::None }
 	};
 
 	int vertexCount = 13;
@@ -86,8 +95,8 @@ struct Scene
 		{ 2, 11 }
 	};
 
-	int textureCount = 7;
-	Texture* textures[7] =
+	int textureCount = 8;
+	Texture* textures[8] =
 	{
 		Texture_LoadPPM("Textures\\BrickRed.ppm"),
 		Texture_LoadPPM("Textures\\BrickGray.ppm"),
@@ -95,7 +104,8 @@ struct Scene
 		Texture_LoadPPM("Textures\\Concrete.ppm"),
 		Texture_LoadPPM("Textures\\Plaster.ppm"),
 		Texture_LoadPPM("Textures\\Sky.ppm"),
-		Texture_LoadPPM("Textures\\Grid.ppm")
+		Texture_LoadPPM("Textures\\Grid.ppm"),
+		Texture_LoadPPM("Textures\\Bars.ppm")
 	};
 } defaultScene;
 
