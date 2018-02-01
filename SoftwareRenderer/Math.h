@@ -28,6 +28,15 @@ inline float RadiansToDegrees(float v)
 	return v * 57.2958f;
 }
 
+inline int FloorToInt(float v)
+{
+	return (int)(v + 32768.0f) - 32768;/*
+	int i = int(v);
+	if (i > v)
+		return i - 1;
+	return i;*/
+}
+
 struct Vector2
 {
 	float x, y;

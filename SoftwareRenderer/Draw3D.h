@@ -34,7 +34,7 @@ namespace Draw3D
 		float distanceToProjectionPlane;
 	};
 
-	void DrawFloor(DrawData* drawdata, ColumnData* columndata, bool isfloor, int ystart, int yend, float floorheight, Texture* tex)
+	void DrawFloor(DrawData* drawdata, ColumnData* columndata, bool isfloor, int ystart, int yend, float floorheight, Texture* tex, Vector2 textureoffset, Vector2 texturescale)
 	{
 		float tanfov = drawdata->camera->focalLength;
 		float pixeltogradcoefficent = tanfov * 2.0f / drawdata->width;
@@ -52,13 +52,13 @@ namespace Draw3D
 				invdist = (drawdata->height / 2 - y) * distortionfix;
 			//float dist = 1.0f / invdist;
 
-			float worldx = drawdata->camera->position.x + dirx / invdist;
-			float worldy = drawdata->camera->position.y + diry / invdist;
+			float worldx = textureoffset.x + texturescale.x * (drawdata->camera->position.x + dirx / invdist);
+			float worldy = textureoffset.y + texturescale.y * (drawdata->camera->position.y + diry / invdist);
 
-			int texx = (int)(worldx * tex->width) % tex->width;
+			int texx = FloorToInt(worldx * tex->width) % tex->width;
 			if (texx < 0)
 				texx += tex->width;
-			int texy = (int)(worldy * tex->height) % tex->height;
+			int texy = FloorToInt(worldy * tex->height) % tex->height;
 			if (texy < 0)
 				texy += tex->height;
 
@@ -69,20 +69,23 @@ namespace Draw3D
 		}
 	}
 
-	void DrawWall(DrawData* drawdata, int x, int ystart, int yend, int yoffscreenstart, int yoffscreenend, float dist, Texture* tex, float texturepoint)
+	void DrawWall(DrawData* drawdata, int x, int ystart, int yend, int yoffscreenstart, int yoffscreenend, float wallheight, float dist, Texture* tex, Vector2 textureoffset, Vector2 texturescale, float texturepoint)
 	{
 		// get texture info
-		int lineheight = yoffscreenend - yoffscreenstart;
-		float texoffset = (float)tex->height / lineheight;
-		float currenttexy = (ystart - yoffscreenstart) * texoffset;
-		int texstart = (int)(tex->width * texturepoint);
-
+		int texx = FloorToInt(tex->width * (textureoffset.x + texturepoint * texturescale.x)) % tex->width;
+		if (texx < 0)
+			texx += tex->width;
+		float mul = texturescale.y * wallheight / (float)(yoffscreenend - yoffscreenstart);
 		for (int y = ystart; y < yend; ++y)
 		{
-			int color = tex->data[texstart + (int)currenttexy * tex->width];
+			int texy = FloorToInt((float)tex->height * (textureoffset.y + (float)(y - yoffscreenstart) * mul));
+			texy %= tex->height;
+			if (texy < 0)
+				texy += tex->height;
+
+			int color = tex->data[texx + texy * tex->width];
 			//color = ApplyDistanceShadow(color, dist);
 			drawdata->colorBuffer[y * drawdata->width + x] = color;
-			currenttexy += texoffset;
 		}
 	}
 
@@ -132,7 +135,7 @@ namespace Draw3D
 
 		texturepoint = fmodf(texturepoint, 1.0f); // wrap texture
 
-												  // calculate wall pixel height on screen
+		// calculate wall pixel height on screen
 		float wallheight = sector->ceilingHeight - sector->floorHeight;
 		int lineheight = (int)(columndata->distanceToProjectionPlane * wallheight / dist);
 
@@ -149,20 +152,20 @@ namespace Draw3D
 		if (sector->floorSurface.sky)
 			DrawSky(drawdata, columndata->x, ywallend, yend, columndata->worldAngle, drawdata->scene->textures[sector->floorSurface.textureID]);
 		else
-			DrawFloor(drawdata, columndata, true, ywallend, yend, floorheight, drawdata->scene->textures[sector->floorSurface.textureID]);
+			DrawFloor(drawdata, columndata, true, ywallend, yend, floorheight, drawdata->scene->textures[sector->floorSurface.textureID], sector->floorSurface.textureOffset, sector->floorSurface.textureScale);
 
 		// ceiling
 		float ceilingheight = fabsf(sector->ceilingHeight * 2 - drawdata->camera->height);
 		if (sector->ceilingSurface.sky)
 			DrawSky(drawdata, columndata->x, ystart, ywallstart, columndata->worldAngle, drawdata->scene->textures[sector->ceilingSurface.textureID]);
 		else
-			DrawFloor(drawdata, columndata, false, ystart, ywallstart, ceilingheight, drawdata->scene->textures[sector->ceilingSurface.textureID]);
+			DrawFloor(drawdata, columndata, false, ystart, ywallstart, ceilingheight, drawdata->scene->textures[sector->ceilingSurface.textureID], sector->ceilingSurface.textureOffset, sector->ceilingSurface.textureScale);
 
 		// draw wall
 		if (wall->surface.sky)
 			DrawSky(drawdata, columndata->x, ywallstart, ywallend, columndata->worldAngle, drawdata->scene->textures[wall->surface.textureID]);
 		else
-			DrawWall(drawdata, columndata->x, ywallstart, ywallend, yoffscreenstart, yoffscreenend, dist, drawdata->scene->textures[wall->surface.textureID], texturepoint);
+			DrawWall(drawdata, columndata->x, ywallstart, ywallend, yoffscreenstart, yoffscreenend, wallheight, dist, drawdata->scene->textures[wall->surface.textureID], wall->surface.textureOffset, wall->surface.textureScale, texturepoint);
 
 		// OPTIMISE: This could be better because it's draw the entire wall before drawing the sector when only part of the wall needs to be drawn
 		if (wall->nextSector != -1)
